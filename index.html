@@ -482,11 +482,11 @@ MC.GalaxyLand.IR
 </div>
 
 <div id="status">
-🕐 آخرین بررسی: هنوز بررسی‌ای انجام نشده
+⚪ آخرین بررسی: هنوز بررسی‌ای انجام نشده
 </div>
 
 <div id="players">
-👥 بازیکنان آنلاین: --
+👥 بازیکنان: هنوز بررسی‌ای انجام نشده
 </div>
 
 <br>
@@ -754,9 +754,13 @@ class="btn buy">
 /* ================= SERVER STATUS ================= */
 
 const SERVER_HOST = "MC.GalaxyLand.IR";
+const SERVER_PORT = 25565;
 
 const API_URL =
-  "https://api.mcsrvstat.us/3/" + SERVER_HOST;
+  "https://api.mcsrvstat.us/3/" +
+  SERVER_HOST +
+  ":" +
+  SERVER_PORT;
 
 const CHECK_INTERVAL = 5000;
 const TIMEOUT = 5000;
@@ -767,6 +771,7 @@ const statusElement =
 const playersElement =
   document.getElementById("players");
 
+let hasCheckedSuccessfully = false;
 let lastStatus = null;
 let lastPlayers = null;
 
@@ -786,13 +791,14 @@ async function updateServerStatus(){
 
     const response =
       await fetch(
-        API_URL + "?t=" + Date.now(),
+        API_URL,
         {
-          method: "GET",
-          cache: "no-store",
-          signal: controller.signal
+          method:"GET",
+          cache:"no-store",
+          signal:controller.signal
         }
       );
+
 
     clearTimeout(timeout);
 
@@ -808,54 +814,58 @@ async function updateServerStatus(){
 
     if(data.online === true){
 
-      lastStatus =
+      hasCheckedSuccessfully = true;
+      lastStatus = "online";
+
+
+      const online =
+        data.players &&
+        typeof data.players.online === "number"
+        ? data.players.online
+        : 0;
+
+
+      const max =
+        data.players &&
+        typeof data.players.max === "number"
+        ? data.players.max
+        : "?";
+
+
+      lastPlayers =
+        "👥 بازیکنان آنلاین: "
+        + online
+        + " / "
+        + max;
+
+
+      statusElement.innerText =
         "🟢 سرور آنلاین است";
 
 
-      if(
-        data.players &&
-        typeof data.players.online === "number"
-      ){
+      playersElement.innerText =
+        lastPlayers;
 
-        const online =
-          data.players.online;
+    }
 
-        const max =
-          typeof data.players.max === "number"
-          ? data.players.max
-          : "?";
+    else{
 
+      hasCheckedSuccessfully = true;
+      lastStatus = "offline";
 
-        lastPlayers =
-          "👥 بازیکنان آنلاین: "
-          + online
-          + " / "
-          + max;
-
-      }else{
-
-        lastPlayers =
-          "👥 بازیکنان آنلاین: نامشخص";
-
-      }
-
-
-    }else{
-
-      lastStatus =
-        "🔴 سرور آفلاین است";
 
       lastPlayers =
         "👥 بازیکنان آنلاین: 0";
 
+
+      statusElement.innerText =
+        "🔴 سرور آفلاین است";
+
+
+      playersElement.innerText =
+        lastPlayers;
+
     }
-
-
-    statusElement.innerText =
-      lastStatus;
-
-    playersElement.innerText =
-      lastPlayers;
 
 
   }catch(error){
@@ -863,21 +873,36 @@ async function updateServerStatus(){
     clearTimeout(timeout);
 
 
-    if(lastStatus !== null){
+    if(!hasCheckedSuccessfully){
 
       statusElement.innerText =
-        lastStatus;
+        "⚪ آخرین بررسی: هنوز بررسی‌ای انجام نشده";
+
+
+      playersElement.innerText =
+        "👥 بازیکنان: هنوز بررسی‌ای انجام نشده";
+
+    }
+
+    else if(lastStatus === "online"){
+
+      statusElement.innerText =
+        "🟢 سرور آنلاین است";
+
 
       playersElement.innerText =
         lastPlayers;
 
-    }else{
+    }
+
+    else if(lastStatus === "offline"){
 
       statusElement.innerText =
-        "🕐 آخرین بررسی: هنوز بررسی‌ای انجام نشده";
+        "🔴 سرور آفلاین است";
+
 
       playersElement.innerText =
-        "👥 بازیکنان آنلاین: --";
+        lastPlayers;
 
     }
 
@@ -887,6 +912,7 @@ async function updateServerStatus(){
 
 
 updateServerStatus();
+
 
 setInterval(
   updateServerStatus,
@@ -925,9 +951,11 @@ function showRank(rank){
     .innerText =
     "💎 رنک " + rank;
 
+
   document.getElementById("modalText")
     .innerText =
     ranks[rank];
+
 
   const buyButton =
     document.getElementById("buyButton");
