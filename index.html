@@ -482,11 +482,11 @@ MC.GalaxyLand.IR
 </div>
 
 <div id="status">
-🟡 در حال بررسی...
+🕐 آخرین بررسی: هنوز بررسی‌ای انجام نشده
 </div>
 
 <div id="players">
-👥 بازیکنان: در حال بررسی...
+👥 بازیکنان آنلاین: --
 </div>
 
 <br>
@@ -758,7 +758,7 @@ const SERVER_HOST = "MC.GalaxyLand.IR";
 const API_URL =
   "https://api.mcsrvstat.us/3/" + SERVER_HOST;
 
-const CHECK_INTERVAL = 30000;
+const CHECK_INTERVAL = 5000;
 const TIMEOUT = 5000;
 
 const statusElement =
@@ -767,15 +767,11 @@ const statusElement =
 const playersElement =
   document.getElementById("players");
 
+let lastStatus = null;
+let lastPlayers = null;
+
 
 async function updateServerStatus(){
-
-  statusElement.innerText =
-    "🟡 در حال بررسی...";
-
-  playersElement.innerText =
-    "👥 بازیکنان: در حال بررسی...";
-
 
   const controller =
     new AbortController();
@@ -812,7 +808,7 @@ async function updateServerStatus(){
 
     if(data.online === true){
 
-      statusElement.innerText =
+      lastStatus =
         "🟢 سرور آنلاین است";
 
 
@@ -830,7 +826,7 @@ async function updateServerStatus(){
           : "?";
 
 
-        playersElement.innerText =
+        lastPlayers =
           "👥 بازیکنان آنلاین: "
           + online
           + " / "
@@ -838,7 +834,7 @@ async function updateServerStatus(){
 
       }else{
 
-        playersElement.innerText =
+        lastPlayers =
           "👥 بازیکنان آنلاین: نامشخص";
 
       }
@@ -846,24 +842,44 @@ async function updateServerStatus(){
 
     }else{
 
-      statusElement.innerText =
+      lastStatus =
         "🔴 سرور آفلاین است";
 
-      playersElement.innerText =
+      lastPlayers =
         "👥 بازیکنان آنلاین: 0";
 
     }
+
+
+    statusElement.innerText =
+      lastStatus;
+
+    playersElement.innerText =
+      lastPlayers;
 
 
   }catch(error){
 
     clearTimeout(timeout);
 
-    statusElement.innerText =
-      "⚠️ وضعیت سرور قابل دریافت نیست";
 
-    playersElement.innerText =
-      "👥 بازیکنان: نامشخص";
+    if(lastStatus !== null){
+
+      statusElement.innerText =
+        lastStatus;
+
+      playersElement.innerText =
+        lastPlayers;
+
+    }else{
+
+      statusElement.innerText =
+        "🕐 آخرین بررسی: هنوز بررسی‌ای انجام نشده";
+
+      playersElement.innerText =
+        "👥 بازیکنان آنلاین: --";
+
+    }
 
   }
 
