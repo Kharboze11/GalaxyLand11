@@ -23,8 +23,6 @@ body{
   line-height:1.8;
 }
 
-/* ================= HEADER ================= */
-
 header{
   position:sticky;
   top:0;
@@ -81,8 +79,6 @@ nav a:hover{
 nav a:active{
   transform:scale(.95);
 }
-
-/* ================= HOME ================= */
 
 .hero{
   min-height:82vh;
@@ -146,8 +142,6 @@ nav a:active{
   color:#eee;
 }
 
-/* ================= BUTTON ================= */
-
 .btn{
   display:inline-block;
   padding:12px 24px;
@@ -171,8 +165,6 @@ nav a:active{
   transform:scale(.96);
 }
 
-/* ================= SECTIONS ================= */
-
 section{
   max-width:1100px;
   margin:auto;
@@ -185,8 +177,6 @@ section{
   color:#d8a7ff;
   margin-bottom:35px;
 }
-
-/* ================= SERVER ================= */
 
 .server-box{
   text-align:center;
@@ -221,8 +211,6 @@ section{
   color:#ddd;
 }
 
-/* ================= FEATURES ================= */
-
 .features{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
@@ -247,8 +235,6 @@ section{
   color:#d8a7ff;
   margin-bottom:8px;
 }
-
-/* ================= RANKS ================= */
 
 .ranks{
   display:grid;
@@ -285,8 +271,6 @@ section{
   color:#bbb;
   margin-bottom:15px;
 }
-
-/* ================= GUIDE / RULES / CHANNEL ================= */
 
 .guide-box,
 .rules-box,
@@ -346,16 +330,12 @@ section{
   font-weight:bold;
 }
 
-/* ================= FOOTER ================= */
-
 footer{
   text-align:center;
   padding:35px 20px;
   background:rgba(0,0,0,.25);
   color:#aaa;
 }
-
-/* ================= MODAL ================= */
 
 .modal{
   display:none;
@@ -402,8 +382,6 @@ footer{
   margin-top:10px;
 }
 
-/* ================= MOBILE ================= */
-
 @media(max-width:700px){
 
   nav{
@@ -441,8 +419,6 @@ footer{
 
 <body>
 
-<!-- ================= HEADER ================= -->
-
 <header>
 
 <nav>
@@ -466,9 +442,6 @@ footer{
 
 </header>
 
-
-<!-- ================= HOME ================= -->
-
 <section class="hero" id="home">
 
 <div class="hero-content">
@@ -490,9 +463,6 @@ GalaxyLand 🌌
 </div>
 
 </section>
-
-
-<!-- ================= SERVER ================= -->
 
 <section id="server">
 
@@ -528,9 +498,6 @@ MC.GalaxyLand.IR
 </div>
 
 </section>
-
-
-<!-- ================= FEATURES ================= -->
 
 <section>
 
@@ -571,9 +538,6 @@ MC.GalaxyLand.IR
 </div>
 
 </section>
-
-
-<!-- ================= RANKS ================= -->
 
 <section id="ranks">
 
@@ -628,9 +592,6 @@ MC.GalaxyLand.IR
 </div>
 
 </section>
-
-
-<!-- ================= GUIDE ================= -->
 
 <section id="guide">
 
@@ -701,9 +662,6 @@ MC.GalaxyLand.IR
 
 </section>
 
-
-<!-- ================= RULES ================= -->
-
 <section id="rules">
 
 <h2 class="title">
@@ -725,9 +683,6 @@ MC.GalaxyLand.IR
 </div>
 
 </section>
-
-
-<!-- ================= RUBIKA ================= -->
 
 <section id="rubika">
 
@@ -761,18 +716,12 @@ class="btn">
 
 </section>
 
-
-<!-- ================= FOOTER ================= -->
-
 <footer>
 
 <p>🌌 GalaxyLand</p>
 <p>تمام حقوق برای GalaxyLand محفوظ است.</p>
 
 </footer>
-
-
-<!-- ================= RANK MODAL ================= -->
 
 <div class="modal" id="rankModal">
 
@@ -800,7 +749,6 @@ class="btn buy">
 
 </div>
 
-
 <script>
 
 /* ================= SERVER STATUS ================= */
@@ -808,160 +756,207 @@ class="btn buy">
 const SERVER_HOST = "MC.GalaxyLand.IR";
 
 const API_URL =
-"https://api.mcsrvstat.us/3/" + SERVER_HOST;
+  "https://api.mcsrvstat.us/3/" + SERVER_HOST;
+
+const CHECK_INTERVAL = 30000;
+const TIMEOUT = 5000;
+
+const statusElement =
+  document.getElementById("status");
+
+const playersElement =
+  document.getElementById("players");
 
 
 async function updateServerStatus(){
 
-const status =
-document.getElementById("status");
+  statusElement.innerText =
+    "🟡 در حال بررسی...";
 
-const players =
-document.getElementById("players");
+  playersElement.innerText =
+    "👥 بازیکنان: در حال بررسی...";
 
-status.innerText =
-"🟡 در حال بررسی...";
 
-players.innerText =
-"👥 بازیکنان: در حال بررسی...";
+  const controller =
+    new AbortController();
 
-try{
+  const timeout =
+    setTimeout(() => {
+      controller.abort();
+    }, TIMEOUT);
 
-const response =
-await fetch(API_URL);
 
-if(!response.ok)
-throw new Error("API Error");
+  try {
 
-const data =
-await response.json();
+    const response =
+      await fetch(
+        API_URL + "?t=" + Date.now(),
+        {
+          method: "GET",
+          cache: "no-store",
+          signal: controller.signal
+        }
+      );
 
-if(data.online === true){
+    clearTimeout(timeout);
 
-status.innerText =
-"🟢 سرور آنلاین است";
 
-if(data.players){
+    if(!response.ok){
+      throw new Error("Server status error");
+    }
 
-players.innerText =
-"👥 بازیکنان آنلاین: "
-+
-data.players.online
-+
-" / "
-+
-data.players.max;
 
-}else{
+    const data =
+      await response.json();
 
-players.innerText =
-"👥 بازیکنان آنلاین: نامشخص";
+
+    if(data.online === true){
+
+      statusElement.innerText =
+        "🟢 سرور آنلاین است";
+
+
+      if(
+        data.players &&
+        typeof data.players.online === "number"
+      ){
+
+        const online =
+          data.players.online;
+
+        const max =
+          typeof data.players.max === "number"
+          ? data.players.max
+          : "?";
+
+
+        playersElement.innerText =
+          "👥 بازیکنان آنلاین: "
+          + online
+          + " / "
+          + max;
+
+      }else{
+
+        playersElement.innerText =
+          "👥 بازیکنان آنلاین: نامشخص";
+
+      }
+
+
+    }else{
+
+      statusElement.innerText =
+        "🔴 سرور آفلاین است";
+
+      playersElement.innerText =
+        "👥 بازیکنان آنلاین: 0";
+
+    }
+
+
+  }catch(error){
+
+    clearTimeout(timeout);
+
+    statusElement.innerText =
+      "⚠️ وضعیت سرور قابل دریافت نیست";
+
+    playersElement.innerText =
+      "👥 بازیکنان: نامشخص";
+
+  }
 
 }
 
-}else{
-
-status.innerText =
-"🔴 سرور آفلاین است";
-
-players.innerText =
-"👥 بازیکنان آنلاین: 0";
-
-}
-
-}catch(error){
-
-status.innerText =
-"⚠️ وضعیت سرور قابل دریافت نیست";
-
-players.innerText =
-"👥 بازیکنان: نامشخص";
-
-}
-
-}
 
 updateServerStatus();
 
-setInterval(updateServerStatus,30000);
+setInterval(
+  updateServerStatus,
+  CHECK_INTERVAL
+);
 
 
 /* ================= RANKS ================= */
 
 const ranks = {
 
-"Default":
-"رنک پیش‌فرض و رایگان سرور. مناسب برای شروع بازی در GalaxyLand.",
+  "Default":
+  "رنک پیش‌فرض و رایگان سرور. مناسب برای شروع بازی در GalaxyLand.",
 
-"VIP":
-"رنک VIP با امکانات ویژه. مدت اعتبار: 1 ماه. قیمت: 50,000 تومان.",
+  "VIP":
+  "رنک VIP با امکانات ویژه. مدت اعتبار: 1 ماه. قیمت: 50,000 تومان.",
 
-"MVP":
-"رنک MVP با امکانات بیشتر و قابلیت‌های ویژه. مدت اعتبار: 1 ماه. قیمت: 100,000 تومان.",
+  "MVP":
+  "رنک MVP با امکانات بیشتر و قابلیت‌های ویژه. مدت اعتبار: 1 ماه. قیمت: 100,000 تومان.",
 
-"MVP+":
-"رنک MVP+ با امکانات ویژه‌تر. مدت اعتبار: 1 ماه. قیمت: 150,000 تومان.",
+  "MVP+":
+  "رنک MVP+ با امکانات ویژه‌تر. مدت اعتبار: 1 ماه. قیمت: 150,000 تومان.",
 
-"GALAXY":
-"رنک GALAXY برای بازیکنان ویژه GalaxyLand. مدت اعتبار: 1 ماه. قیمت: 250,000 تومان.",
+  "GALAXY":
+  "رنک GALAXY برای بازیکنان ویژه GalaxyLand. مدت اعتبار: 1 ماه. قیمت: 250,000 تومان.",
 
-"SPONSER":
-"رنک SPONSER ویژه با اعتبار 45 روز. قیمت: 500,000 تومان."
+  "SPONSER":
+  "رنک SPONSER ویژه با اعتبار 45 روز. قیمت: 500,000 تومان."
 
 };
 
 
 function showRank(rank){
 
-document.getElementById("modalTitle")
-.innerText =
-"💎 رنک " + rank;
+  document.getElementById("modalTitle")
+    .innerText =
+    "💎 رنک " + rank;
 
-document.getElementById("modalText")
-.innerText =
-ranks[rank];
+  document.getElementById("modalText")
+    .innerText =
+    ranks[rank];
 
-const buyButton =
-document.getElementById("buyButton");
+  const buyButton =
+    document.getElementById("buyButton");
 
-if(rank === "Default"){
 
-buyButton.style.display =
-"none";
+  if(rank === "Default"){
 
-}else{
+    buyButton.style.display =
+      "none";
 
-buyButton.style.display =
-"inline-block";
+  }else{
 
-}
+    buyButton.style.display =
+      "inline-block";
 
-document.getElementById("rankModal")
-.style.display =
-"flex";
+  }
+
+
+  document.getElementById("rankModal")
+    .style.display =
+    "flex";
 
 }
 
 
 function closeModal(){
 
-document.getElementById("rankModal")
-.style.display =
-"none";
+  document.getElementById("rankModal")
+    .style.display =
+    "none";
 
 }
 
 
 document.getElementById("rankModal")
-.addEventListener(
-"click",
-function(e){
+  .addEventListener(
+    "click",
+    function(e){
 
-if(e.target === this){
-closeModal();
-}
+      if(e.target === this){
+        closeModal();
+      }
 
-});
+    }
+  );
 
 </script>
 
